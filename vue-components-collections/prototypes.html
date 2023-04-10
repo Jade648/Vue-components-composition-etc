@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Prototypes</title>
+</head>
+<body>
+<h1>Prototype Demo</h1>
+<p>Check the console.</p>
+<script>
+
+    /**
+     * Prototypes are simply objects that define a template for future objects.
+     */
+    // example prototype
+    const ExampleA = {
+        // properties
+        length: 0,
+        width: 0,
+
+        // pseudo-private
+        _diagonal: 5,
+
+        // methods
+        area(){
+            return this.length * this.width;
+        },
+
+        // dynamic properties
+        get diagonal(){
+            return Math.sqrt(Math.pow(this.length, 2) + Math.pow(this.width, 2));
+        },
+        set diagonal(value){
+            this._diagonal = value;
+        }
+    }
+    console.log(ExampleA);
+    // creating an object from a prototype is a little complex, but VERY flexible
+    let exA = Object.create(ExampleA);
+    exA.length = 2;
+    exA.width = 2;
+    let exAA = Object.create(exA);
+    exAA.length=8;
+    console.log(exAA);
+    // or
+    //let exA = Object.create(ExampleA, {
+    //                                      length: {value: 3,
+    //                                            writable: false,
+    //                                            enumerable: false
+    //                                            },
+    //                                      ...
+    //                                   });
+
+    // you can also define a construct or init method to simplify the assigning of properties
+    const ExampleA2 = {
+        // properties
+        length: 0,
+        width: 0,
+
+        // methods
+        area(){
+            return this.length * this.width;
+        },
+
+        init(length, width){
+            this.length = length;
+            this.width = width;
+
+            // return this to support chaining
+            return this;
+        },
+
+        // dynamic properties
+        get diagonal(){
+            return Math.sqrt(Math.pow(this.length, 2) + Math.pow(this.width, 2));
+        }
+    }
+    // then call this function when you create the object
+    let exA2 = Object.create(ExampleA2).init(3, 3);
+
+
+    /**
+     * "Constructor functions" are used to define the prototype and
+     * how to initialize the properties when the object is instantiated/created
+     */
+    // example constructor function
+    function ExampleB(length, width){
+        // properties
+        this.length = length ?? 0;
+        this.width = width ?? 0;
+
+        // methods
+        this.area = function(){
+            return this.length * this.width;
+        }
+
+        // dynamic properties
+        Object.defineProperty(this, 'diagonal', {
+            get() {
+                return Math.sqrt(Math.pow(this.length, 2) + Math.pow(this.width, 2));
+            },
+            enumerable: true
+        });
+    }
+
+    // To create an object (using the function as the prototype), use the "new" keyword
+    let exB = new ExampleB(4, 4);
+
+    /**
+     * Factory Functions (Hybrid prototype/constructor function)
+     * This is simply a function that returns a new object. The new keyword is optional
+     */
+    function ExampleAB(length, width){
+        return {
+            // properties
+            length: length ?? 0,
+            width: width ?? 0,
+
+            // methods
+            area(){
+                return this.length * this.width;
+            },
+
+            // dynamic properties
+            get diagonal(){
+                return Math.sqrt(Math.pow(this.length, 2) + Math.pow(this.width, 2));
+            }
+        }
+    }
+
+    // To create an object, these get a little confusing because the new keyword is optional
+    // The downside: there is no way to access the prototype
+    let exAB = ExampleAB(6, 6);
+    let exAB2 = new ExampleAB(7, 7);
+
+
+
+    /**
+     * Classes (or ES6/ES2015 syntactic sugar to look like classes).
+     * These are not really classes in the traditional sense,
+     * since EVERYTHING in JS is an object, INCLUDING classes...
+     */
+    // example class
+    class ExampleC {
+        // properties
+        length = 0;
+        width = 0;
+
+        // constructor (called when a new object is created/instantiated)
+        constructor(length, width){
+            this.length = length;
+            this.width = width;
+        }
+
+        // methods
+        area(){
+            return this.length * this.width;
+        }
+
+        // dynamic properties
+        get diagonal(){
+            return Math.sqrt(Math.pow(this.length, 2) + Math.pow(this.width, 2));;
+        }
+    }
+
+    // Creating an object from a class is identical to a constructor function
+    let exC = new ExampleC(8, 8);
+
+
+
+    // let's see what we have so far...
+    console.log('Object from prototype:', exA, exA2)
+    console.log('Object from function:', exB);
+    console.log('Objects from factory function:', exAB, exAB2);
+    console.log('Object from class:', exC);
+
+    // calling object methods
+    console.log('AREA:');
+    console.log('Ex A (object):', exA.area());
+    console.log('Ex B (function):', exB.area());
+    console.log('Ex C (class):', exC.area());
+    exA.diagonal = 10;
+    // using dynamic properties
+    // note: it is not a function, so don't use the ()
+    console.log('DIAGONAL:');
+    console.log('Ex A (object):', exA.diagonal);
+    console.log('Ex B (function):', exB.diagonal);
+    console.log('Ex C (class):', exC.diagonal);
+
+
+
+    /**
+     * This is where the prototype magic happens. All objects maintain a "prototype chain".
+     * You can modify a prototype at any time and all objects (past and future)
+     * will have access to those modifications (unless local overrides exist -- like length/width).
+     */
+
+    // Here we can add a method, property, dynamic property, etc. to any prototype
+    // Note: Example AB has no referencable prototype other than a generic object
+    ExampleA.perimeter = function(){ return 2 * (this.length + this.width); }
+    ExampleB.prototype.perimeter = function(){ return 2 * (this.length + this.width); }
+    ExampleC.prototype.perimeter = function(){ return 2 * (this.length + this.width); }
+
+    console.log('PERIMETER:');
+    console.log('Ex A (object):', exA.perimeter());
+    console.log('Ex B (function):', exB.perimeter());
+    console.log('Ex C (class):', exC.perimeter());
+
+
+
+    // let's keep it DRY
+    {
+        function squarePerimeter() {
+            return 2 * (this.length + this.width);
+        }
+
+        ExampleA.perimeter = squarePerimeter;
+        ExampleB.prototype.perimeter = squarePerimeter;
+        ExampleC.prototype.perimeter = squarePerimeter;
+    }
+
+    // $('#something').hide();
+    // $.prototype.flash = function(){
+    //
+    // }
+    // $('#something').flash();
+    // Vue.prototype.whatever = function(){
+    //
+    // }
+
+    my
+
+
+
+</script>
+</body>
+</html>
